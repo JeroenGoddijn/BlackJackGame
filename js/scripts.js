@@ -10,6 +10,9 @@ const player = document.getElementById('player'),
     dealerHand = document.getElementById('dealer-hand'),
     newCard = document.createElement('img').setAttribute('class', 'col-1 player-card');
 
+// Global variables
+let isPlayersTurn = true;
+let gameStarted = false;
 
 // Create Card Deck (52 cards)
 class Deck {
@@ -29,11 +32,25 @@ class Deck {
         // define a (fixed) deck of cards
         // H=Hearts, S=Spades, D=Diamonds, C=Clubs (using abbreviations due to filenames cards)
         const suits = ['H', 'S', 'D', 'C'];
-        const values = ['A', 2, 3, 4, 5, 6, 7, 8, 9, 10, 'J', 'Q', 'K'];
+        const values = [2, 3, 4, 5, 6, 7, 8, 9, 10, 'J', 'Q', 'K', 'A'];
+        let points = '';
 
         for (let suit in suits) {
             for (let value in values) {
-                this.deck.push(`${values[value]}${suits[suit]}`);
+                // console.log(values[value]);
+                let cardName = `${values[value]}${suits[suit]}`;
+                let imageURL = ('images/cards/' + cardName +'.jpg');
+                if(values[value] === 'J' || values[value] === 'Q' || values[value] === 'K') {
+                    points = 10;
+                } 
+                else if(values[value] === 'A') {
+                    points = 11;
+                    }
+                else {
+                    points = values[value];
+                }
+                this.deck.push({'card':cardName, 'points':points, 'imageURL':imageURL});
+                console.log({'card':cardName, 'points':points, 'imageURL':imageURL});
             }
         }
     }
@@ -68,23 +85,50 @@ console.log(deck1.deck);
 // Create Player class
 
 
-// 
 // Deal 2 random cards to player (face up) and 2 random cards to dealer (face down)
 // showCards = true for player, showCards = false for dealer until player stands
 console.log(document.getElementById('deal-button'));
 var dealClicked = document.getElementById('deal-button').addEventListener('click', function(){
     //write "deal" logic here
-    // find player-div as starting point
-    // playerHand.appendChild(newCard).setAttribute('src', 'images/cards' + deck1.deal());
-    // playerHand.appendChild(newCard).setAttribute('src', deck1.deal());
-    cardDealt = deck1.deal()
+    // find player-div as starting point (defined as constant on top of file) and make sure it's empty
     playerHand.innerHTML = '';
-    for(var i=0; i< 2; i++) {
-        var card = document.createElement('img');
+    dealerHand.innerHTML = '';
+    playerScore = 0;
+    dealerScore = 0;
+
+    // deal 2 cards to each player
+    for(let i=0; i< 2; i++) {
+        console.log(i);
+        cardDealt = deck1.deal(i)
+        let card = document.createElement('img');
         playerHand.appendChild(card);
-        card.setAttribute('class', 'col-1 player-card');
-        var cardImage = card.setAttribute('src', ('images/cards/' + cardDealt + '.jpg'));
-        card.appendChild(cardImage);
+        card.setAttribute('class', 'col-1 dealer-card');
+        let cardImage = card.setAttribute('src', cardDealt.imageURL);
+        console.log(cardDealt);
+        // Update player's score
+        playerScore += cardDealt.points;
+        playerPoints.textContent = playerScore;
+
+    }
+
+    //deal 2 cards to dealer
+    for(let j=0; j< 2; j++) {
+        console.log(j);
+        cardDealt = deck1.deal(j)
+        let card = document.createElement('img');
+        dealerHand.appendChild(card);
+        card.setAttribute('class', 'col-1 dealer-card');
+        let cardImage = card.setAttribute('src', cardDealt.imageURL);
+        console.log(cardDealt);
+        // Update dealer's score
+        if (!isPlayersTurn) {
+            dealerScore += cardDealt.points;
+            dealerPoints.textContent = dealerScore;    
+        }
+        else {
+            dealerPoints.textContent = 0;
+        }
+
     }
 });
 
@@ -92,3 +136,17 @@ var dealClicked = document.getElementById('deal-button').addEventListener('click
 
 
 // if player clicks HIT, give player another random card
+// Hit player with 1 random card (face up)
+// showCards = true for player, showCards = false for dealer until player stands
+console.log(document.getElementById('hit-button'));
+var dealClicked = document.getElementById('hit-button').addEventListener('click', function(){
+    cardDealt = deck1.deal()
+    let card = document.createElement('img');
+    playerHand.appendChild(card);
+    card.setAttribute('class', 'col-1 dealer-card');
+    let cardImage = card.setAttribute('src', cardDealt.imageURL);
+    console.log(cardDealt);
+    playerScore += cardDealt.points;
+    playerPoints.textContent = playerScore;
+
+});
