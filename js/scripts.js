@@ -10,7 +10,7 @@ const playerTag = document.getElementById('player'),
     dealerPoints = document.getElementById('dealer-points'),
     dealerHand = document.getElementById('dealer-hand'),
     card = document.createElement('img'),
-    newCard = document.createElement('img').setAttribute('class', 'col-1 player-card'),
+    newCard = document.createElement('img').setAttribute('class', 'player-card'),
     messageBoard = document.getElementById('messages'),
     buttonsTag = document.getElementById('buttons');
 
@@ -221,12 +221,12 @@ class Dealer {
         let cardDealt = deck1.deal()
         let card = document.createElement('img');
         dealerHand.appendChild(card);
-        card.setAttribute('class', 'col-1 dealer-card');
+        card.setAttribute('class', 'dealer-card');
         let cardImage = card.setAttribute('src', cardDealt.imageURL);
         console.log(cardDealt);
         // add card to dealer's hand
         this.hand.push(cardDealt);
-        console.log(dealer.hand());
+        console.log(this.hand());
         // add points for new card to dealer's score
         this.score += cardDealt.points;
         dealerPoints.textContent = this.score;  
@@ -286,7 +286,7 @@ var standClicked = document.getElementById('stand-button').addEventListener('cli
     console.log('dealerPoints:',dealer.score );
 
     // If player has more than 21 points, the house wins
-    if (player01.score > 21 && standClicked === false) {
+    if (player01.score > 21 && player01.standClicked === false) {
         console.log('Testing is score > 21');
         playerBusts = true;
         isPlayersTurn = false;
@@ -297,7 +297,7 @@ var standClicked = document.getElementById('stand-button').addEventListener('cli
         messageBoard.textContent = messages[latestMessage];
     }
     
-    else if(dealer.score <= 16 && this.standClicked === false) {
+    else if(dealer.score <= 16 && dealer.standClicked === false) {
         // If the card total is 16 points or lower, the dealer will always draw another card from the deck. 
         console.log('Testing is dealer score <= 16');
         dealer.hit();
