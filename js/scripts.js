@@ -2,21 +2,26 @@
 
 const playerTag = document.getElementById('player'),
     playerName = document.getElementById('player-name'),
+    playerNameValue = playerName.querySelector('label'),
     playerPoints = document.getElementById('player-points'),
     playerHand = document.getElementById('player-hand'),
     dealerTag = document.getElementById('dealer'),
     dealerName = document.getElementById('dealer-name'),
     dealerPoints = document.getElementById('dealer-points'),
     dealerHand = document.getElementById('dealer-hand'),
+    card = document.createElement('img'),
     newCard = document.createElement('img').setAttribute('class', 'col-1 player-card'),
-    messageBoard = document.getElementById('messages');
+    messageBoard = document.getElementById('messages'),
+    buttonsTag = document.getElementById('buttons');
 
 // Global variables
+let cardDealt;
 let players = [];
 let isPlayersTurn = true;
 let gameStarted = false;
+let message;
 let messages = [];
-let latestMessage = messages.length;
+let latestMessage = messages.length - 1;
 let playerBusts = false;
 let dealerBusts = false;
 
@@ -90,37 +95,128 @@ console.log(deck1.deck);
 
 // Create Player class
 class Player {
-    constructor(name, points) {
+    constructor(name, points = 0, turnNumber = 0, isPlayersTurn = true, standClicked = false, playerBusts = false) {
         // // declare empty player array
         // this.player = [];
         this.name = name;
         this.score = points;
+        this.turnNumber = turnNumber;
+        this.hand = [];
+        this.isPlayersTurn = isPlayersTurn;
+        this.standClicked = standClicked;
+        this.playerBusts = playerBusts;
+        this.welcomePlayer(this.name);
+    }
+
+    welcomePlayer() {
+        // Welcome player by name
+        message = "Welcome, " + this.name + ". Let's play some BlackJack.";
+        messages.push(message);
+        let latestMessage = messages.length -1;
+        messageBoard.textContent = messages[latestMessage];
+        console.log(latestMessage);
+        console.log(messages[latestMessage]);   
+        playerNameValue.textContent = this.name +': ';     
+    }
+
+    deal() {
+        // reset score to 0, since clicking DEAL starts new game
+        this.score = 0;
+        this.hand = [];
+        // deal 2 cards to each player
+        for(let i=0; i< 2; i++) {
+            console.log(i);
+            cardDealt = deck1.deal(i);
+            let card = document.createElement('img');
+            playerHand.appendChild(card);
+            card.setAttribute('class', 'player-card');
+            let cardImage = card.setAttribute('src', cardDealt.imageURL);
+            console.log(cardDealt);
+            this.hand.push(cardDealt);
+            console.log(player01.hand);
+            // Update player's score
+            this.score += cardDealt.points;
+            console.log(this.score);
+            playerPoints.textContent = this.score;
+        }
+        this.turnNumber += 1;
     }
 
     hit() {
         let cardDealt = deck1.deal();
         let card = document.createElement('img');
+        // console.log(card);
         playerHand.appendChild(card);
-        card.setAttribute('class', 'col-1 dealer-card');
+        card.setAttribute('class', 'player-card');
         let cardImage = card.setAttribute('src', cardDealt.imageURL);
         console.log(cardDealt);
+        // add card to player's hand
+        this.hand.push(cardDealt);
+        console.log(player01.hand);
+        // add points for new card to player's score
         player01.score += cardDealt.points;
         playerPoints.textContent = player01.score;
         console.log('playerPoints:', player01.score);
         console.log('dealerPoints:',dealer.score );
+        this.turnNumber += 1;
     }
-
 };
 
 // Create Dealer class
 class Dealer {
-    constructor(name, points) {
+    constructor(name, points = 0, turnNumber = 0, isPlayersTurn = false, standClicked = false, playerBusts = false) {
         // // declare empty dealer array
         // this.dealer = [];
         this.name = name;
         this.score = points;
+        this.turnNumber = turnNumber;
+        this.hand = [];
+        this.isPlayersTurn = isPlayersTurn;
+        this.standClicked = standClicked;
+        this.playerBusts = playerBusts;
     }
 
+    deal(){
+        // reset score to 0, since clicking DEAL starts new game
+        this.score = 0;
+        this.hand = [];
+        console.log('dealerHand=', dealerHand);
+        dealerHand.setAttribute('style','visibility: visible;');
+        //deal 2 cards to dealer
+        for(let j=0; j< 2; j++) {
+            console.log(j);
+            cardDealt = deck1.deal(j);
+            this.hand.push(cardDealt);
+            console.log(dealer.hand);
+            // let card = document.createElement('img');
+            // dealerHand.appendChild(card);
+            // card.setAttribute('class', 'dealer-card');
+            // let cardImage = card.setAttribute('src', 'images/cards/awesome_back.png');
+            console.log(cardDealt);
+            // Update dealer's score
+            this.score += cardDealt.points;
+        }
+        
+        this.turnNumber += 1;
+    }
+
+    showCards() {
+
+        dealerHand.innerHTML = '';
+        
+        for(let cardNumber in this.hand) {
+            // display dealer's cards
+            console.log('card#', cardNumber);
+            let card = document.createElement('img');
+            dealerHand.appendChild(card);
+            card.setAttribute('class', 'dealer-card');
+            let cardImage = card.setAttribute('src', this.hand[cardNumber].imageURL);
+            // display dealer's score
+            dealerPoints.textContent = dealer.score;   
+
+        }
+    }
+ 
     hit() {
         let cardDealt = deck1.deal()
         let card = document.createElement('img');
@@ -128,24 +224,21 @@ class Dealer {
         card.setAttribute('class', 'col-1 dealer-card');
         let cardImage = card.setAttribute('src', cardDealt.imageURL);
         console.log(cardDealt);
-        // Update dealer's score
-        dealer.score += cardDealt.points;
-        dealerPoints.textContent = dealer.score;  
-        console.log('playerPoints:', player01.score);
-        console.log('dealerPoints:',dealer.score );
+        // add card to dealer's hand
+        this.hand.push(cardDealt);
+        console.log(dealer.hand());
+        // add points for new card to dealer's score
+        this.score += cardDealt.points;
+        dealerPoints.textContent = this.score;  
+        console.log('playerPoints:', this.score);
+        console.log('dealerPoints:',this.score );
+        // dealer.evaluateScores();
+        this.turnNumber += 1;
     }
-
 };
 
-let dealer = new Dealer('dealer', 0);
-let player01 = new Player(window.prompt("What is your name?"), 0);
-
-// Welcome player by name
-message = "Welcome, " + `${player01.name}`+ ". Let's play some BlackJack.";
-messages.push(message);
-messageBoard.textContent = messages[latestMessage];
-console.log(latestMessage);
-console.log(messages[latestMessage]);
+let dealer = new Dealer('dealer');
+let player01 = new Player(window.prompt("What is your name?"));
 
 // Deal 2 random cards to player (face up) and 2 random cards to dealer (face down)
 // showCards = true for player, showCards = false for dealer until player stands
@@ -154,46 +247,20 @@ var dealClicked = document.getElementById('deal-button').addEventListener('click
     //write "deal" logic here
     // find player-div as starting point (defined as constant on top of file) and make sure it's empty
     playerHand.innerHTML = '';
-    dealerHand.innerHTML = '';
-    player01.score = 0;
-    dealer.score = 0;
 
-    // deal 2 cards to each player
-    for(let i=0; i< 2; i++) {
-        console.log(i);
-        cardDealt = deck1.deal(i)
-        let card = document.createElement('img');
-        playerHand.appendChild(card);
-        card.setAttribute('class', 'col-1 dealer-card');
-        let cardImage = card.setAttribute('src', cardDealt.imageURL);
-        console.log(cardDealt);
-        // Update player's score
-        // playerScore += cardDealt.points;
-        player01.score += cardDealt.points;
-        console.log(player01);
-        console.log(player01.score);
-        playerPoints.textContent = player01.score;
+    player01.deal();
+
+    dealer.deal();
+
+    if(player01.score === 21 && standClicked === false) {
+        console.log('Testing is score = 21:', this.score);
+        let message = 'BlackJack! You win!!!';
+        messages.push(message);
+        let latestMessage = messages.length -1;
+        console.log('Latest Message: ',latestMessage);
+        messageBoard.textContent = messages[latestMessage];        
     }
 
-    //deal 2 cards to dealer
-    for(let j=0; j< 2; j++) {
-        console.log(j);
-        cardDealt = deck1.deal(j)
-        let card = document.createElement('img');
-        dealerHand.appendChild(card);
-        card.setAttribute('class', 'col-1 dealer-card');
-        let cardImage = card.setAttribute('src', cardDealt.imageURL);
-        console.log(cardDealt);
-        // Update dealer's score
-        if (!isPlayersTurn) {
-            dealerPoints.setAttribute('style','visibility: visible;');
-        }
-        else {
-            dealerPoints.setAttribute('style','visibility: hidden;');
-        }
-        dealer.score += cardDealt.points;
-        dealerPoints.textContent = dealer.score;    
-    }
 });
 
 // if player clicks HIT, give player another random card
@@ -209,65 +276,103 @@ var hitClicked = document.getElementById('hit-button').addEventListener('click',
 // Hit dealer with 1 random card (face up) if dealerScore < 17
 console.log(document.getElementById('stand-button'));
 var standClicked = document.getElementById('stand-button').addEventListener('click', function(){
-    isPlayersTurn = false;
-    if (!isPlayersTurn) {
-        dealerPoints.setAttribute('style','visibility: visible;');
-    }
-    else {
-        dealerPoints.setAttribute('style','visibility: hidden;');
-    }
+    player01.standClicked = true;
+
+    buttonsTag.setAttribute('style','visibility: hidden;');
+
+    dealer.showCards();
+
     console.log('playerPoints:', player01.score);
     console.log('dealerPoints:',dealer.score );
 
-    console.log(dealer.score <= player01.score);
-    while (dealer.score <= player01.score) {
-        dealer.hit();
-    }
-});
-
-
-
-
-// If the card total is 16 points or lower, the dealer will always draw another card from the deck. 
-// The dealer will continue drawing cards from the deck until the house hand has at least 17 points, 
-// or until it goes bust by going over 21. If the dealer has 17 points off the deal without an Ace, 
-// most blackjack rules say the dealer will stand, even if a 21 player has a higher total.
-
-// The dealer also might have a soft 17 hand, which is one that includes an Ace and any other cards 
-// whose combined value totals six points. Both land-based casinos and online blackjack casinos who 
-// support live dealer blackjack require dealers to take at least one more card with the dealer has a 
-// soft 17 showing. The dealer will continue taking more cards—until the house’s hand either becomes a hard 17 or higher, 
-// or the hand goes over 21 and goes bust.
-function evaluateScores() {
-    if(playerPoints === 21) {
-        message = 'You have BlackJack! You win!!!';
-        messages.push(message);
-        messageBoard.textContent = messages[latestMessage];        
-    }
     // If player has more than 21 points, the house wins
-    else if (playerPoints > 21) {
+    if (player01.score > 21 && standClicked === false) {
+        console.log('Testing is score > 21');
         playerBusts = true;
         isPlayersTurn = false;
         message = "You went BUST! The house wins.";
         messages.push(message);
+        let latestMessage = messages.length -1;
+        console.log('Latest Message: ',latestMessage);
         messageBoard.textContent = messages[latestMessage];
     }
-    // If dealer has 17 points or more, the house stands
+    
+    else if(dealer.score <= 16 && this.standClicked === false) {
+        // If the card total is 16 points or lower, the dealer will always draw another card from the deck. 
+        console.log('Testing is dealer score <= 16');
+        dealer.hit();
 
-    // If player has <= 21 points
-    else if(playerPoints >=17 && playerPoints <=21) {
-            cardDealt = deck1.deal()
-            let card = document.createElement('img');
-            playerHand.appendChild(card);
-            card.setAttribute('class', 'col-1 dealer-card');
-            let cardImage = card.setAttribute('src', cardDealt.imageURL);
-            console.log(cardDealt);
-            playerScore += cardDealt.points;
-            playerPoints.textContent = playerScore;
+        message = 'Dealer takes another card.';
+        messages.push(message);
+        let latestMessage = messages.length -1;
+        console.log('Latest Message: ',latestMessage);
+        messageBoard.textContent = messages[latestMessage];
+        }
+        // The dealer will continue drawing cards from the deck until the house hand has at least 17 points, 
+        // or until it goes bust by going over 21. 
+        else if(dealer.score > 21) {
+            console.log('Testing is dealer score > 21');
+            dealer.standClicked;
+            message = 'Dealer went BUST!! You win!!!';
+            messages.push(message);
+            let latestMessage = messages.length -1;
+            console.log('Latest Message: ',latestMessage);
+            messageBoard.textContent = messages[latestMessage];    
+        }
+
+        // If the dealer has 17 points off the deal without an Ace, 
+        // most blackjack rules say the dealer will stand, even if a player has a higher total.
+        else if(dealer.score === 17 && dealer.standClicked === false) {
+            console.log('Testing is dealer score = 17');
+            message = 'Dealer stands.';
+            messages.push(message);
+            let latestMessage = messages.length -1;
+            console.log('Latest Message: ',latestMessage);
+            messageBoard.textContent = messages[latestMessage];    
+        }
+
+        // else if(){
+        // The dealer also might have a soft 17 hand, which is one that includes an Ace and any other cards 
+        // whose combined value totals six points. Both land-based casinos and online blackjack casinos who 
+        // support live dealer blackjack require dealers to take at least one more card with the dealer has a 
+        // soft 17 showing. The dealer will continue taking more cards—until the house’s hand either becomes a 
+        // hard 17 or higher, or the hand goes over 21 and goes bust.        else if (playerPoints > 21) {
+        // }
+
+        else if(dealer.score >= 17 && dealer.score <= 21 && dealer.standClicked === false) {
+            console.log('Type of score: ', typeof(this.score), ' Type of standClicked: ', typeof(this.standClicked));
+            // If dealer has 17 points or more, the house stands
+            console.log('Testing is dealer score between 17 and 21');
+            message = 'Dealer stands.';
+            messages.push(message);
+            latestMessage = messages.length -1;
+            console.log('Latest Message: ',latestMessage);
+            messageBoard.textContent = messages[latestMessage];    
+
+            return this.isPlayersTurn = false;
+        }
+
+    console.log('Is dealer-score <= player-score?', dealer.score <= player01.score);
+    if (dealer.score < player01.score) {
+        let message = 'You win!';
+        messages.push(message);
+        let latestMessage = messages.length -1;
+        console.log('Latest Message: ',latestMessage);
+        messageBoard.textContent = messages[latestMessage];    
+}
+    else if (dealer.score > player01.score) {
+        let message = 'The House wins!';
+        messages.push(message);
+        let latestMessage = messages.length -1;
+        console.log('Latest Message: ',latestMessage);
+        messageBoard.textContent = messages[latestMessage];    
     }
     else {
-        message = 'You win! Congratulations.'
+        let message = 'It\s a draw. The dealer should have taken 1 more card!';
         messages.push(message);
-        messageBoard.textContent = message;    
+        let latestMessage = messages.length -1;
+        console.log('Latest Message: ',latestMessage);
+        messageBoard.textContent = messages[latestMessage];    
     }
-}
+console.log(messages);
+});
