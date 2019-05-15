@@ -12,7 +12,10 @@ const playerTag = document.getElementById('player'),
     card = document.createElement('img'),
     newCard = document.createElement('img').setAttribute('class', 'player-card'),
     messageBoard = document.getElementById('messages'),
-    buttonsTag = document.getElementById('buttons');
+    buttonsTag = document.getElementById('buttons'), 
+    dealButton = document.getElementById('deal-button'),
+    hitButton = document.getElementById('hit-button'),
+    standButton = document.getElementById('stand-button');
 
 // Global variables
 let cardDealt;
@@ -134,6 +137,7 @@ class Player {
             console.log(cardDealt);
             this.hand.push(cardDealt);
             console.log(player01.hand);
+
             // Update player's score
             this.score += cardDealt.points;
             console.log(this.score);
@@ -152,13 +156,46 @@ class Player {
         console.log(cardDealt);
         // add card to player's hand
         this.hand.push(cardDealt);
-        console.log(player01.hand);
+        console.log(this.hand);
         // add points for new card to player's score
-        player01.score += cardDealt.points;
-        playerPoints.textContent = player01.score;
-        console.log('playerPoints:', player01.score);
+        this.score += cardDealt.points;
+        playerPoints.textContent = this.score;
+        console.log('playerPoints:', this.score);
         console.log('dealerPoints:',dealer.score );
         this.turnNumber += 1;
+
+        // check for Aces if player score > 21
+        if (this.score > 21) {
+            for (let c in cardDealt) {
+                // console.log('c=', dealer.hand[c]['card']);
+                let cardValue = cardDealt['card'];
+                // console.log('cardValue= ' + cardValue);
+                let cardPoints = cardDealt['points'];
+                // console.log('cardPoints= '+ cardPoints);
+                // let aceIndex = player01.hand.indexOf(cardValue);
+                // let aceIndex = Object.getOwnPropertyDescriptor(cardDealt, cardValue);
+                // console.log('ace-index = ' + aceIndex);
+                if (cardValue[0]==='A' && cardPoints === 11) {
+                    console.log("I found an ACE in this hand");
+
+                    console.log('cardValue= ' + cardValue);
+                    console.log('cardPoints= '+ cardPoints);
+                    // console.log('ace-index = ' + aceIndex);
+
+                    cardDealt['points'] = 1;
+                    console.log('New cardPoints= '+ cardPoints);
+                    this.score -= 10;
+                    playerPoints.textContent = this.score;
+                    console.log(this.hand);
+                    console.log(this.score);
+                }
+                else {
+                    continue;
+                }
+            }
+        }
+
+        calcWinnerHit();
     }
 };
 
@@ -212,7 +249,7 @@ class Dealer {
             card.setAttribute('class', 'dealer-card');
             let cardImage = card.setAttribute('src', this.hand[cardNumber].imageURL);
             // display dealer's score
-            dealerPoints.textContent = dealer.score;   
+            dealerPoints.textContent = this.score;   
 
         }
     }
@@ -226,19 +263,216 @@ class Dealer {
         console.log(cardDealt);
         // add card to dealer's hand
         this.hand.push(cardDealt);
-        console.log(this.hand());
+        console.log(this.hand);
         // add points for new card to dealer's score
         this.score += cardDealt.points;
         dealerPoints.textContent = this.score;  
         console.log('playerPoints:', this.score);
         console.log('dealerPoints:',this.score );
         // dealer.evaluateScores();
+        calcWinnerStand();
         this.turnNumber += 1;
     }
 };
 
+function checkForAces(player) {
+    for (let c in player.hand) {
+        console.log('c=', player.hand[c]['card']);
+        let cardValue = player.hand[c]['card'];
+        if (cardValue.startsWith('A')) {
+            console.log("I found an ACE in this hand");
+            return true;
+        }
+        else {
+            return false;
+        }
+    }        
+
+}
+// Once the dealer is at or above 17 points and the player has stopped hitting, a winner will be calculated
+function calcWinnerBlackjack(){
+    if (player01.score === 21 && player01.hand.length === 2) {
+        // Uncomment the line below for debugging player score
+        // console.log('Testing is player score = 21:', player01.score);
+        // Update messageboard to announce winner
+        let message = 'BlackJack! You win!!!';
+        messages.push(message);
+        let latestMessage = messages.length -1;
+        // Uncomment the line below for debugging messageboard
+        console.log('Latest Message: ',latestMessage);
+        messageBoard.textContent = messages[latestMessage];        
+        // deactivate HIT and STAND button
+        hitButton.disabled = true; 
+        standButton.disabled = true;    
+    }
+};
+
+// Separate calc winner function for a "hit"
+function calcWinnerHit(){
+    if (dealer.score > 21 || player01.score > 21){
+        let dealerAce = checkForAces(dealer);
+        let player01Ace = checkForAces(player01);
+
+        if (dealer.score >  21 && dealerAce === false){
+            // Update messageboard to announce winner
+            let message = 'You win!!!';
+            messages.push(message);
+            let latestMessage = messages.length -1;
+            // Uncomment the line below for debugging messageboard
+            console.log('Latest Message: ',latestMessage);
+            messageBoard.textContent = messages[latestMessage];        
+        }
+        // else if (dealerAce === true) {
+        //     for (let c in dealer.hand) {
+        //         // console.log('c=', dealer.hand[c]['card']);
+        //         let cardValue = dealer.hand[c]['card'];
+        //         let cardPoints = dealer.hand[c]['points'];
+        //         let aceIndex = dealer.hand.indexOf(cardValue);
+        //         console.log('ace-index =', aceIndex);
+        //         if (cardValue.startsWith('A') && cardPoints === 11) {
+        //             console.log(cardDealt.points);
+        //             console.log("I found an ACE in this hand");
+        //             dealer.hand[c]['points'] = 1;
+        //             console.log(cardPoints);
+        //         }
+        //         else {
+        //             return false;
+        //         }
+        
+        //     }
+        // }
+
+
+        if (player01.score > 21 && player01Ace === false){
+            // Update messageboard to announce winner
+            let message = 'The House wins.';
+            messages.push(message);
+            let latestMessage = messages.length -1;
+            // Uncomment the line below for debugging messageboard
+            // console.log('Latest Message: ',latestMessage);
+            messageBoard.textContent = messages[latestMessage];  
+            hitButton.disabled = true; 
+            standButton.disabled = true;        
+        }
+        // else if (player01Ace === true) {
+        //     for (let c in player01.hand) {
+        //         // console.log('c=', dealer.hand[c]['card']);
+        //         let cardValue = player01.hand[c]['card'];
+        //         console.log('cardValue= ' + cardValue);
+        //         let cardPoints = player01.hand[c]['points'];
+        //         console.log('cardPoints= '+ cardPoints);
+        //         // let aceIndex = player01.hand.indexOf(cardValue);
+        //         let aceIndex = Object.getOwnPropertyDescriptor(player01.hand, cardValue);
+        //         console.log('ace-index = ' + aceIndex);
+        //         if (cardValue.startsWith('A') && cardPoints === 11) {
+        //             console.log('cardValue= ' + cardValue);
+        //             console.log('cardPoints= '+ cardPoints);
+        //             console.log('ace-index = ' + aceIndex);
+
+        //             console.log('cardDealtPoints = ' + cardDealt.points);
+        //             console.log("I found an ACE in this hand");
+        //             player01.hand[c]['points'] = 1;
+        //             console.log('cardPoints= '+ cardPoints);
+        //         }
+        //         else {
+        //             return false;
+        //         }
+        
+        //     }
+        // }
+
+    }
+};
+
+// Separate calc winner function for a "hit"
+function calcWinnerStand() {
+    player01.standClicked = true;
+    buttonsTag.setAttribute('style','visibility: hidden;');
+    dealer.showCards();
+
+    console.log('playerPoints:', player01.score);
+    console.log('dealerPoints:',dealer.score );
+
+    // If the dealer has 17 points off the deal without an Ace, 
+    // most blackjack rules say the dealer will stand, even if a player has a higher total.
+    if(dealer.score === 17 && dealer.hand.length === 2 && player01.score <=21) { // add dealer.hand does not contain ACE check
+        // dealer stands, hence does nothing
+        console.log('Dealer has 17 on deal and will stand.');
+        let message = 'Dealer stands.';
+        messages.push(message);
+        let latestMessage = messages.length -1;
+        // Uncomment the line below for debugging messageboard
+        // console.log('Latest Message: ',latestMessage);
+        messageBoard.textContent = messages[latestMessage];  
+
+    }
+
+    if (dealer.score > player01.score && dealer.score <= 21) {
+        // Update messageboard to announce winner
+        let message = 'The House wins.';
+        messages.push(message);
+        let latestMessage = messages.length -1;
+        // Uncomment the line below for debugging messageboard
+        // console.log('Latest Message: ',latestMessage);
+        messageBoard.textContent = messages[latestMessage];  
+        hitButton.disabled = true; 
+        standButton.disabled = true;
+    }
+
+    // If the card total is 16 points or lower, the dealer will always draw another card from the deck. 
+    else if (dealer.score < 17 && player01.score > dealer.score && player01.score <= 21){
+        console.log('Testing is dealer score <= 16');
+        // The dealer will continue drawing cards from the deck until the house hand has at least 17 points, 
+        dealer.hit();
+    }
+
+    // else if(dealer.score === 17  ) { // dealer.hand does contain ACE
+        // The dealer also might have a soft 17 hand, which is one that includes an Ace and any other cards 
+        // whose combined value totals six points. Both land-based casinos and online blackjack casinos who 
+        // support live dealer blackjack require dealers to take at least one more card with the dealer has a 
+        // soft 17 showing. The dealer will continue taking more cards—until the house’s hand either becomes a 
+        // hard 17 or higher, or the hand goes over 21 and goes bust.        else if (playerPoints > 21) {
+    // }
+
+    // or until it goes bust by going over 21. 
+    else if (player01.score > dealer.score && player01.score <= 21 || dealer.score > 21 && player01.score <= 21) {
+        // Update messageboard to announce winner
+        let message = 'You win!!!';
+        messages.push(message);
+        let latestMessage = messages.length -1;
+        // Uncomment the line below for debugging messageboard
+        console.log('Latest Message: ',latestMessage);
+        messageBoard.textContent = messages[latestMessage];        
+    }
+
+    else if (player01.score === dealer.score) {
+        // Update messageboard to announce winner
+        let message = 'Draw...';
+        messages.push(message);
+        let latestMessage = messages.length -1;
+        // Uncomment the line below for debugging messageboard
+        console.log('Latest Message: ',latestMessage);
+        messageBoard.textContent = messages[latestMessage];        
+    }
+    dealButton.disabled = false; 
+};
+
+
+function main() {
+    // hide HIT and STAND button until game is started by user clicking DEAL button
+    hitButton.disabled = false; 
+    standButton.disabled = false;
+    playerHand.innerHTML = '';
+    player01.deal();
+    dealer.deal();
+    //check if the player wins on initial hand
+    calcWinnerBlackjack();
+};
+
 let dealer = new Dealer('dealer');
 let player01 = new Player(window.prompt("What is your name?"));
+hitButton.disabled = true; 
+standButton.disabled = true;
 
 // Deal 2 random cards to player (face up) and 2 random cards to dealer (face down)
 // showCards = true for player, showCards = false for dealer until player stands
@@ -246,133 +480,19 @@ console.log(document.getElementById('deal-button'));
 var dealClicked = document.getElementById('deal-button').addEventListener('click', function(){
     //write "deal" logic here
     // find player-div as starting point (defined as constant on top of file) and make sure it's empty
-    playerHand.innerHTML = '';
-
-    player01.deal();
-
-    dealer.deal();
-
-    if(player01.score === 21 && standClicked === false) {
-        console.log('Testing is score = 21:', this.score);
-        let message = 'BlackJack! You win!!!';
-        messages.push(message);
-        let latestMessage = messages.length -1;
-        console.log('Latest Message: ',latestMessage);
-        messageBoard.textContent = messages[latestMessage];        
-    }
-
+    main();
 });
 
 // if player clicks HIT, give player another random card
-// Hit player with 1 random card (face up)
-// showCards = true for player, showCards = false for dealer until player stands
 console.log(document.getElementById('hit-button'));
 var hitClicked = document.getElementById('hit-button').addEventListener('click', function(){
     player01.hit();
 });
 
 // if player clicks STAND, give turn to dealer
-// showCards = true for player, showCards = false for dealer until player stands
-// Hit dealer with 1 random card (face up) if dealerScore < 17
 console.log(document.getElementById('stand-button'));
 var standClicked = document.getElementById('stand-button').addEventListener('click', function(){
-    player01.standClicked = true;
+    calcWinnerStand();
 
-    buttonsTag.setAttribute('style','visibility: hidden;');
-
-    dealer.showCards();
-
-    console.log('playerPoints:', player01.score);
-    console.log('dealerPoints:',dealer.score );
-
-    // If player has more than 21 points, the house wins
-    if (player01.score > 21 && player01.standClicked === false) {
-        console.log('Testing is score > 21');
-        playerBusts = true;
-        isPlayersTurn = false;
-        message = "You went BUST! The house wins.";
-        messages.push(message);
-        let latestMessage = messages.length -1;
-        console.log('Latest Message: ',latestMessage);
-        messageBoard.textContent = messages[latestMessage];
-    }
-    
-    else if(dealer.score <= 16 && dealer.standClicked === false) {
-        // If the card total is 16 points or lower, the dealer will always draw another card from the deck. 
-        console.log('Testing is dealer score <= 16');
-        dealer.hit();
-
-        message = 'Dealer takes another card.';
-        messages.push(message);
-        let latestMessage = messages.length -1;
-        console.log('Latest Message: ',latestMessage);
-        messageBoard.textContent = messages[latestMessage];
-        }
-        // The dealer will continue drawing cards from the deck until the house hand has at least 17 points, 
-        // or until it goes bust by going over 21. 
-        else if(dealer.score > 21) {
-            console.log('Testing is dealer score > 21');
-            dealer.standClicked;
-            message = 'Dealer went BUST!! You win!!!';
-            messages.push(message);
-            let latestMessage = messages.length -1;
-            console.log('Latest Message: ',latestMessage);
-            messageBoard.textContent = messages[latestMessage];    
-        }
-
-        // If the dealer has 17 points off the deal without an Ace, 
-        // most blackjack rules say the dealer will stand, even if a player has a higher total.
-        else if(dealer.score === 17 && dealer.standClicked === false) {
-            console.log('Testing is dealer score = 17');
-            message = 'Dealer stands.';
-            messages.push(message);
-            let latestMessage = messages.length -1;
-            console.log('Latest Message: ',latestMessage);
-            messageBoard.textContent = messages[latestMessage];    
-        }
-
-        // else if(){
-        // The dealer also might have a soft 17 hand, which is one that includes an Ace and any other cards 
-        // whose combined value totals six points. Both land-based casinos and online blackjack casinos who 
-        // support live dealer blackjack require dealers to take at least one more card with the dealer has a 
-        // soft 17 showing. The dealer will continue taking more cards—until the house’s hand either becomes a 
-        // hard 17 or higher, or the hand goes over 21 and goes bust.        else if (playerPoints > 21) {
-        // }
-
-        else if(dealer.score >= 17 && dealer.score <= 21 && dealer.standClicked === false) {
-            console.log('Type of score: ', typeof(this.score), ' Type of standClicked: ', typeof(this.standClicked));
-            // If dealer has 17 points or more, the house stands
-            console.log('Testing is dealer score between 17 and 21');
-            message = 'Dealer stands.';
-            messages.push(message);
-            latestMessage = messages.length -1;
-            console.log('Latest Message: ',latestMessage);
-            messageBoard.textContent = messages[latestMessage];    
-
-            return this.isPlayersTurn = false;
-        }
-
-    console.log('Is dealer-score <= player-score?', dealer.score <= player01.score);
-    if (dealer.score < player01.score) {
-        let message = 'You win!';
-        messages.push(message);
-        let latestMessage = messages.length -1;
-        console.log('Latest Message: ',latestMessage);
-        messageBoard.textContent = messages[latestMessage];    
-}
-    else if (dealer.score > player01.score) {
-        let message = 'The House wins!';
-        messages.push(message);
-        let latestMessage = messages.length -1;
-        console.log('Latest Message: ',latestMessage);
-        messageBoard.textContent = messages[latestMessage];    
-    }
-    else {
-        let message = 'It\s a draw. The dealer should have taken 1 more card!';
-        messages.push(message);
-        let latestMessage = messages.length -1;
-        console.log('Latest Message: ',latestMessage);
-        messageBoard.textContent = messages[latestMessage];    
-    }
-console.log(messages);
+    console.log(messages);
 });
